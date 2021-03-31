@@ -34,8 +34,7 @@ import entities.Camera;
 import entities.Entity;
 import entities.Light;
 import entities.Player;
-import guis.GuiRenderer;
-import guis.GuiTexture;
+
 
 public class MainGameLoop {
 
@@ -44,7 +43,7 @@ public class MainGameLoop {
 		DisplayManager.createDisplay();
 		Loader loader = new Loader();
 
-		// *********TERRAIN TEXTURE STUFF**********
+		//setup terrain and textures and other things
 		
 		TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("grassy2"));
 		TerrainTexture rTexture = new TerrainTexture(loader.loadTexture("mud"));
@@ -54,8 +53,6 @@ public class MainGameLoop {
 		TerrainTexturePack texturePack = new TerrainTexturePack(backgroundTexture, rTexture,
 				gTexture, bTexture);
 		TerrainTexture blendMap = new TerrainTexture(loader.loadTexture("blendMap"));
-
-		// *****************************************
 
 		TexturedModel rocks = new TexturedModel(OBJFileLoader.loadOBJ("rocks", loader),
 				new ModelTexture(loader.loadTexture("rocks")));
@@ -83,7 +80,7 @@ public class MainGameLoop {
 		List<Entity> entities = new ArrayList<Entity>();
 		List<Entity> normalMapEntities = new ArrayList<Entity>();
 		
-		//******************NORMAL MAP MODELS************************
+		//normal map models
 		
 		TexturedModel boulderModel = new TexturedModel(NormalMappedObjLoader.loadOBJ("boulder", loader),
 				new ModelTexture(loader.loadTexture("boulder")));
@@ -92,7 +89,7 @@ public class MainGameLoop {
 		boulderModel.getTexture().setReflectivity(0.5f);
 		
 		
-		//************ENTITIES*******************
+		//setting up entities in the map (the floating rock on the lake)
 		
 
         
@@ -131,7 +128,7 @@ public class MainGameLoop {
 		}
 		entities.add(new Entity(rocks, new Vector3f(75, 4.6f, -75), 0, 0, 0, 75));
 		
-		//*******************OTHER SETUP***************
+		//setting up lights, textures, player, mouse
 
 		List<Light> lights = new ArrayList<Light>();
 		Light sun = new Light(new Vector3f(10000, 10000, -10000), new Vector3f(1.3f, 1.3f, 1.3f));
@@ -146,11 +143,10 @@ public class MainGameLoop {
 		Player player = new Player(stanfordBunny, new Vector3f(75, 5, -75), 0, 100, 0, 0.6f);
 		entities.add(player);
 		Camera camera = new Camera(player);
-		List<GuiTexture> guiTextures = new ArrayList<GuiTexture>();
-		GuiRenderer guiRenderer = new GuiRenderer(loader);
+		
 		MousePicker picker = new MousePicker(camera, renderer.getProjectionMatrix(), terrain);
 	
-		//**********Water Renderer Set-up************************
+		//setting up render engine for water
 		
 		WaterFrameBuffers buffers = new WaterFrameBuffers();
 		WaterShader waterShader = new WaterShader();
@@ -159,7 +155,7 @@ public class MainGameLoop {
 		WaterTile water = new WaterTile(75, -75, 0);
 		waters.add(water);
 		
-		//****************Game Loop Below*********************
+		//code for the main game loop
 
 		while (!Display.isCloseRequested()) {
 			player.move(terrain);
@@ -170,7 +166,7 @@ public class MainGameLoop {
 			
 			GL11.glEnable(GL30.GL_CLIP_DISTANCE0);
 			
-			//render reflection teture
+			//our code to render reflection texture
 			buffers.bindReflectionFrameBuffer();
 			float distance = 2 * (camera.getPosition().y - water.getHeight());
 			camera.getPosition().y -= distance;
@@ -179,25 +175,23 @@ public class MainGameLoop {
 			camera.getPosition().y += distance;
 			camera.invertPitch();
 			
-			//render refraction texture
+			//our code to render refraction texture
 			buffers.bindRefractionFrameBuffer();
 			renderer.renderScene(entities, normalMapEntities, terrains, lights, camera, new Vector4f(0, -1, 0, water.getHeight()));
 			
-			//render to screen
+			//our code to render everything to screen
 			GL11.glDisable(GL30.GL_CLIP_DISTANCE0);
 			buffers.unbindCurrentFrameBuffer();	
 			renderer.renderScene(entities, normalMapEntities, terrains, lights, camera, new Vector4f(0, -1, 0, 100000));	
 			waterRenderer.render(waters, camera, sun);
-			guiRenderer.render(guiTextures);
 			
 			DisplayManager.updateDisplay();
 		}
 
-		//*********Clean Up Below**************
+		//clean up from memory after closing display 
 		
 		buffers.cleanUp();
 		waterShader.cleanUp();
-		guiRenderer.cleanUp();
 		renderer.cleanUp();
 		loader.cleanUp();
 		DisplayManager.closeDisplay();
